@@ -1,0 +1,517 @@
+---
+title: "A Dramatic Drop of US Birth Rates after the Great Regression"
+subtitle: "Factors are found, but not enough evidence to explain the reason behind it"
+author: 
+  - Zhiyue Yu
+  - Dingding Wang
+  - Xueru Ma
+thanks: "Code and data are available at: https://github.com/gggeorgeeeyu/sta304-paper2. The DOI is: 10.1257 / jep.36.1.151 see the article page at  https://doi.org/10.1257/jep.36.1.151."
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract: "Birth rate is one of the most important indicators that monitors community health. When the birth rate falls below replacement level, the population grows older and shrinks, a large gap then occurs in the labor market, thus slowing the economic growth and strains the government budget(Murray, 2021). The data we used for research and analyzing is collected through a research paper published by the American Economic Association; the data sets are published on OPENICPSR(Kearney and Levine, 2022). After plotting a few graphs and applying a linear regression model, We find that there is a strong association between the decline in birth rate after 2007 and there are a few elements that dominate the decline in birth rate, but we cannot find strong evidence to explain why these factors cause this change. Our findings provide valuable suggestions for the government and organizations to deal with aging population and shrinking workforce challenges."
+output:
+  bookdown::pdf_document2:
+    toc: true
+    toc_depth: 2
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("usmap")
+
+library(tidyverse)
+```
+
+# Introduction
+
+Birth rate is one of the most important indicators that monitors community health. When the birth rate falls below replacement level, the population grows older and shrinks, a large gap then occurs in the labor market, thus slowing the economic growth and strains the government budget(Murray, 2021). According to the New York Times, the COVID-19 pandemic is accelerating the decline of US birth rate after 2020 (Tavernise, 2021), however, it is not the reason for the birth rate decline after the Great Regression in 2007. In the period of 1980 and 2007, the birth rate of the United States fluctuated between 65 and 70, whilst there was a dramatic drop after 2007(Figure \@ref(fig:fig1)), so what is the reason and explanation after this phenomenon?
+
+The data we used for research and analyzing is collected through a research paper published by the American Economic Association; the data sets are published on OPENICPSR(Kearney and Levine, 2022). The data shows all the demographics and geographics of the US population, as well as other miscellaneous elements related to the population, such as education, economics, etc..
+
+After plotting a few graphs to explore the demographic and applying a linear regression model to it, We find that there is a strong association between the decline in birth rate after 2007 and there are a few elements that dominate the decline in birth rate, such as birth rate of mother aged from 20 to 24 and aged from 30 to 34, birth rate of married mothers, etc., but we cannot find strong evidence to explain why these factors cause this change.
+Our findings will provide valuable suggestions for the government and organizations to deal with aging population and shrinking workforce challenges. We provided some of our opinions in the Discussion(Section \@ref(Discussion)).
+
+# Data
+
+In the paper, we run our analysis in `R` [@citeR]. To plot all the line charts we needed to analyze, we used `tidyverse` package written by [@a], `ggplot2` written by [@b]. When processing the raw data sets, we used `haven` package written by [@c]. To open dta files we used `dplyr` package written by [@d] to apply filter function, to open csv files, we used `readr` package written by [@e]. To arrange the plots, we used `patchwork` writted by [@g] We also used `usmap` written by [@f] to draw the us map.
+
+```{r, include=FALSE,warning=FALSE}
+citation(package = "tidyverse")
+citation(package = "ggplot2")
+citation(package = "haven")
+citation(package = "dplyr")
+citation(package = "readr")
+citation(package = "usmap")
+citation(package = "patchwork")
+```
+
+## Overview
+
+Figure \@ref(fig: fig1) shows the tendency of the birth rate in the United States. It is observed that the decline in the birth rate began from the Great Recession and has continued to decline even after the economy recovered over time. We can view this graph in two parts, one prior to 2007 and a part after 2007. Before 2007, we found that the birth rate changes as if in a cyclical pattern, and that the birth rate fluctuates between a narrow range of 65%-70%.The birth rate has a general downward trend between 1980 and 1987. Subsequently, the birth rate gradually rose and it reached a peak in 1990. Similarly, in the interval from 1990 to 2007, the birth rate first decreases and then gradually increases, and it reaches a relatively high level in 2007. The birth rate at this time was close to the previous maximum birth rate in 1990. However, the state of change in the birth rate after 2007 gradually differs from our previous speculations. We find that the birth rate continues to decline over the thirteen years from 2007 to 2020, and that this decline spans a much longer period of time than the length of the part of the cycle we previously estimated to be declining (five to seven years). At the same time, we also notice that the magnitude of the decline is very large. The birth rate plunged from 69 percent in 2007 to 56 percent in 2020.  The change in the birth rate no longer lies within the 65%-70% range, but falls below it at a rapid pace.
+
+
+```{r fig1, fig.cap="Trend in US Birth Rates from 1980 to 2020",fig.height = 3, fig.width = 5, echo=FALSE,warning=FALSE}
+#read in data for figure1
+data_fig1_1 <- read.csv("fig_1.csv")
+data_fig1 <- na.omit(data_fig1_1)
+#plot figure1
+figure1 <- data_fig1 %>% 
+  #apply ggplot
+  ggplot(aes(x = year, y = brate_all)) + 
+  #change the y axis name
+  ylab("Births per 1,000 women age 15–44") +
+  #change the line color to blue
+  geom_line(color = "blue")+
+  #add a vertical dot line to the graph and change the size of the line
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #apply minimal theme
+  theme_minimal() +
+  #remove the label of x-axis
+  theme(axis.title.x = element_blank()) +
+  geom_text(label="2007", x=2009, y=69)
+figure1
+```
+
+## Demographic
+
+### figure 2a
+
+To figure out what are the factors that influence the birth rate most, we explored several possible factors. In figure \@ref(fig: fig2), we can tell that people in the age group of 25-29 have the highest birth rate, followed by that of people in the age group of 20-24. Apart from the line charts of people in age group 30-34 and 40-44, which rose after 2007, the rest of the age groups have a clearly declining birth rate after 2007. Among those groups, people in the age group 20-24 and 25-29 may have the most influence in the overall birth rate, because they have the top two highest birth rates.
+
+```{r fig2a, fig.cap="a. Five-year age group", echo=FALSE,warning=FALSE}
+#read in data for figure2a and 2b
+data_fig2ab <- read.csv("figs_2a_2b.csv")
+
+#figure 2a
+#Apply ggplot and distinct different lines with different colors
+figure2a <- ggplot(data_fig2ab, aes(year)) + 
+  geom_line(aes(y = brate_1519, colour = "brate_1519")) + 
+  geom_line(aes(y = brate_2024, colour = "brate_2024")) +
+  geom_line(aes(y = brate_2529, colour = "brate_2529")) + 
+  geom_line(aes(y = brate_3034, colour = "brate_3034")) +
+  geom_line(aes(y = brate_3539, colour = "brate_3539")) + 
+  geom_line(aes(y = brate_4044, colour = "brate_4044")) +
+
+  #add label on each line
+  geom_text(label = "Age 40-44", x = 1990, y = 10, color = "black") +
+  geom_text(label = "Age 35-39", x = 1990, y = 30, color = "black") +
+  geom_text(label = "Age 15-19", x = 1990, y = 58, color = "black") +
+  geom_text(label = "Age 30-34", x = 2000, y = 80, color = "black") +
+  geom_text(label = "Age 20-24", x = 1990, y = 110, color = "black") +
+  geom_text(label = "Age 25-29", x = 2006, y = 115, color = "black") +
+  #remove the legend
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  #change the y label
+  labs(y = "Births per 1,000 women in relevant population subgroup") +
+  #add the vertical line one 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add the 2007 label
+  geom_text(label="2007", x=2009, y=69, color = "black")
+
+```
+
+### figure 2b
+
+In figure \@ref(fig: fig2), we explored the effects of race and ethnicity. From the graph, we can easily tell that hispanics experienced a dramatic drop after 2007 from 97 to 62. For those non-hispanics, both black and white people have dropped after 2007, but it is a slight drop and doesn't make a big difference. In this graph, we missed minority groups such as asian(Chinese, Korean and Japanese, which also occupies a large group of people and this is a limitation for the data set and the graph.
+
+```{r fig2b, fig.cap="b. Race and ethnicity of ages 15–44", echo=FALSE,warning=FALSE}
+#figure2b
+#Apply ggplot and distinct different lines with different colors
+figure2b <- ggplot(data_fig2ab, aes(year)) + 
+  geom_line(aes(y = brate_whitenh, colour = "brate_whitenh")) + 
+  geom_line(aes(y = brate_blacknh, colour = "brate_blacknh")) + 
+  geom_line(aes(y = brate_hisp, colour = "brate_hisp")) + 
+  #add label on each line
+  geom_text(label = "Hispanic", x = 2000, y = 100, color = "black") +
+  geom_text(label = "Black, non-Hispanic", x = 2000, y = 70, color = "black") +
+  geom_text(label = "White, non-Hispanic", x = 1995, y = 58, color = "black") +
+  #remove the legend
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
+  #change the y label
+  labs(y = "Births per 1,000 women in relevant population subgroup") +
+  #add the vertical line one 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add the 2007 label
+  geom_text(label="2007", x=2010, y=100, color = "black") +
+  #change the scale of x-axis
+  coord_cartesian(xlim = c(1988, 2020))
+```
+
+### figure 2c
+
+In Figure \@ref(fig: fig2), we can easily see that only the foriegn born Mexican have had a dramatic drop after 2007, from 130 to 70, which is a great contributor to the overall drop of US birth rate. However, for the other groups of people such as Native born Mexicans, there is only a slight drop from 75 to 50. The rest of the hispanic population have zero or negative impact on the drop of birth rate of US hispanic population.
+
+```{r fig2c, fig.cap="c.  Hispanic subpopulation of ages 15–44", echo=FALSE,warning=FALSE,error=FALSE,show_col_types = FALSE}
+figs_1_2_3 <- read_csv("figs_1_2_3.csv")
+options(readr.show_col_types = FALSE)
+# rename variables
+names(figs_1_2_3)[20] <- "Native_born_Mexican"
+names(figs_1_2_3)[21] <- "Foreign_born_Mexican"
+names(figs_1_2_3)[22] <- "Native_born_non_Mexican"
+names(figs_1_2_3)[23] <- "Foreign_born_non_Mexican"
+
+data_2c <-figs_1_2_3 %>% 
+  select(year, 
+         Native_born_Mexican, 
+         Foreign_born_Mexican, 
+         Native_born_non_Mexican, 
+         Foreign_born_non_Mexican)%>%
+  gather(key = " h", value = "Births_per_1000_women", -year)
+data_figc <- na.omit(data_2c)
+colnames(data_figc)<- c("year","Hispanic","Births_per_1000_women")
+
+figure2c<- data_figc %>% 
+  ggplot(aes(x = year, y = Births_per_1000_women)) + 
+  geom_line(aes(color =  Hispanic)) + 
+  scale_color_manual(values = c("grey", "blue", "yellow", "orange")) +
+  #change the y label
+  labs(y = "Births per 1,000 women in relevant population subgroup") +
+  #add label on each line
+  geom_text(label = "Foreign born Mexican", x = 2015, y = 100, color = "black") +
+  geom_text(label = "Native born Mexican", x = 2015, y = 50, color = "black") +
+  geom_text(label = "Native born non Mexican", x = 2000, y = 100, color = "black") +
+  geom_text(label = "Foreign born non Mexican", x = 2000, y = 50, color = "black") +
+  #add the vertical line one 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add the 2007 label
+  geom_text(label="2007", x=2007, y=140, color = "black")+
+  theme(legend.position = "none", axis.title.x = element_blank())
+
+```
+
+### figure 2d
+
+In figure \@ref(fig: fig2), we can see that people with no high school degree tend to have a much higher birth rate and a much more fierce drop of birth rate after 2007, this may due to the impact of Great Recession on their incomes and their mind changes of having a kid. For people with high school and higher degrees, they are affected less by the Great Regression. One possible reason is that they have more deposits for emergencies when the whole world is under financial crisis, so they will not have a big change with their initial plan when it comes to having a baby.
+
+
+```{r fig2d, fig.cap="d.  Mother’s level of education of ages 20–44", echo=FALSE,warning=FALSE}
+names(figs_1_2_3)[13] <- "No_high_school_degree"
+names(figs_1_2_3)[14] <- "high_school_degree"
+names(figs_1_2_3)[15] <- "Some_college"
+names(figs_1_2_3)[16] <- "College_graduate"
+data_2d <-figs_1_2_3 %>% 
+  select(year,
+         No_high_school_degree,	
+         high_school_degree,	
+         Some_college,	
+         College_graduate,)%>%
+  gather(key = " e", value = "Births_per_1000_women", -year)
+data_figd <- na.omit(data_2d)
+colnames(data_figd)<- c("year","education","Births_per_1000_women")
+
+figure2d <- data_figd %>%
+  ggplot(aes(x=year, y = Births_per_1000_women)) + 
+  geom_line(aes(color = education)) + 
+  scale_color_manual(values = c("yellow", "orange", "blue", "grey")) + 
+  # change the y label
+  labs(y = "Births per 1,000 women in relevant population subgroup") +
+  #add label on each line
+  geom_text(label = "No high school degree", x = 1995, y = 100, color = "black") +
+  geom_text(label = "high school degree", x = 1995, y = 60, color = "black") +
+  geom_text(label = "Some college", x = 1995, y = 50, color = "black") +
+  geom_text(label = "College graduate", x = 1995, y = 80, color = "black") +
+  #add the vertical line one 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add the 2007 label
+  geom_text(label="2007", x=2007, y=20, color = "black")+
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank())
+
+```
+
+
+### figure 2e
+
+In figure \@ref(fig: fig2), we explored the factor of marriage. We can tell that married people have a birth rate of around 95, which is much higher than that of unmarried people, whose birth rate is only about 55. Both of the groups did not have a dramatic drop after 2007. This aligns with our common sense and actually did not provide further insights.
+
+```{r fig2e, fig.cap="e. Marital status of ages 15–44", echo=FALSE,warning=FALSE}
+#load in figure 2e data
+data_fig2e <- read.csv("fig_2e.csv")
+
+#apply ggplot to the data
+figure2e <- ggplot(data_fig2e, aes(year)) + 
+  #distinct the lines with different colours
+  geom_line(aes(y = brate_unmarried, colour = "brate_unmarried")) + 
+  geom_line(aes(y = brate_married, colour = "brate_married")) + 
+  #add a vertical line where x = 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add label 2007
+  geom_text(label="2007", x=2009, y=69, color = "black") +
+  #add label "married" and "unmarried"
+  geom_text(label = "Unmarried", x = 2000, y = 50, color = "black") +
+  geom_text(label = "Married", x = 2000, y = 80, color = "black") +
+  #remove the legand
+  theme(legend.position = "none", axis.title.x = element_blank()) +
+  #change the name of y-axis
+  labs(y = "Births per 1,000 women in relevant population subgroup")
+
+```
+
+### figure 2f
+
+In figure \@fig(fig: fig2), we tabulated the trend of birth by parity. It is obvious in the graph that the first birth is affected most by the Great Recession after 2007 where there is a dramatic drop from a rate of 27.6 per 1,000 women of childbearing age to 21.9 per 1,000 women. The effect declines when the number of births increases, the fourth plus birth is rarely affected by the Great Recession. This may be due to the reason that people with less education tend to have more children and their income are not affected by the Great Recession that much, thus will not have an impact on the birth of the number of children.
+
+```{r fig2f, fig.cap="d. Parity of ages 15–44", echo=FALSE,warning=FALSE}
+library(haven)
+#read in the first table
+data_fig2f1 <- read_dta("nchs/nchs_births_pop_1990_2019.dta")
+
+#read in the second table
+data_fig2f2 <- read_dta("pop/age_race_comp_seer.dta")
+
+#left join two tables by year and stname
+data_fig2f3 <- left_join(data_fig2f1,data_fig2f2,by=c("year" = "year", "stname" = "stname"))
+
+#select all the columns that we need
+data_fig2f3 <- data_fig2f3 %>%
+  select(year, numbirth_firstbirth, numbirth_secondbirth, numbirth_thirdbirth, numbirth_fourthbirth, pop1544) 
+
+#calculate the aggregated data(mean) of each column, and then calculate the parity for each one
+aggregated_data <- 
+  aggregate(cbind(numbirth_firstbirth, numbirth_secondbirth, numbirth_thirdbirth, numbirth_fourthbirth, pop1544)~ year, data = data_fig2f3, FUN = mean) %>%
+  mutate(parity_firstbirth = numbirth_firstbirth/pop1544*1000) %>%
+  mutate(parity_secondbirth = numbirth_secondbirth/pop1544*1000) %>%
+  mutate(parity_thirdirth = numbirth_thirdbirth/pop1544*1000) %>%
+  mutate(parity_fourthbirth = numbirth_fourthbirth/pop1544*1000)
+  
+#apply ggplot to each column and distinguish them with different colors
+figure2f <- ggplot(aggregated_data, aes(year)) + 
+  geom_line(aes(y = parity_firstbirth, colour = "parity_firstbirth")) +
+  geom_line(aes(y = parity_secondbirth, colour = "parity_secondbirth")) +
+  geom_line(aes(y = parity_thirdirth, colour = "parity_thirdirth")) +
+  geom_line(aes(y = parity_fourthbirth, colour = "parity_fourthbirth")) +
+  #add a vertical line where x is 2007
+  geom_vline(xintercept = 2007, linetype = "dotted", size = 0.8) +
+  #add label 2007
+  geom_text(label="2007", x=2009, y=15, color = "black") +
+  #add label "married" and "unmarried"
+  geom_text(label = "First birth", x = 2000, y = 26, color = "black") +
+  geom_text(label = "Second birth", x = 2000, y = 20, color = "black") +
+  geom_text(label = "Third birth", x = 2000, y = 12, color = "black") +
+  geom_text(label = "Fourth birth", x = 2000, y = 9, color = "black") +
+  #remove the legand
+  theme(legend.position = "none", axis.title.x = element_blank(), axis.title.y = element_blank()) +
+  #change the name of y-axis
+  labs(y = "Births per 1,000 women in relevant population subgroup")
+
+```
+
+```{r fig2,echo=FALSE, warning=FALSE, fig.height = 12, fig.width = 12, fig.align = "center", fig.cap = "Trends in Birth Rates by Population Subgroup",warning=FALSE}
+library(patchwork)
+(figure2a | figure2b) /
+(figure2c | figure2d) /
+(figure2e | figure2f)
+```
+
+# Model
+
+## Linear Regression
+
+Regression analysis, both linear and multivariate, is a widely-used statistical method used to quantify the relationship between one dependent variable and the other independent variables that are thought to explain it. Regressions can also identify how close and well determined the relationship is. A Multivariate regression model has been used on various indicator variables using a database collected from both public sources and aggregated from the National Center for Health Statistics’ (NCHS) microdata that are restricted in use[@papercitation]. In this case, the independent variables X include the important variables such as age groups, hispanic origin, marital status, and state. The final interpretation of the rate of birth can be estimated from the observed values of the independent variables with appropriate reduced models.
+
+The method for our model selection is forward selection method, a type of stepwise regression that uses statistical significance to select the explanatory variables, which starts with an empty model and adds variables one by one. The goal of stepwise regression is to find a set of independent variables that significantly influence the dependent variable(Birth rate) through a series of tests, such as F-tests and t-tests[@wdd1]. This is done with iteration, as We add the predictor variables one by one and examine the SSres, R^2, R^2 adj and AIC at each stage of the model. The determination of whether the addition of variables improves or worsen our model is by conducting examinations of whether the values of SSres, AIC, BIC have decreased, along with whether the R^2 and R^2 adj have increased. In the adjusted model, 2 non-significant predictors were removed from the full model, remaining only 2 age groups, race, marital status and Hispanic origin.
+
+## Full model, Reduced model and ANOVA
+
+```{r, include=FALSE}
+library(readr)
+figs_1_2_3 <- read_csv("figs_1_2_3.csv")
+data_regression <- na.omit(figs_1_2_3) 
+# full model of all potential indicators
+full_model = lm(brate_all ~ brate_2024+brate_3034+brate_whitenh+brate_hisp+brate_married+brate_native_mex+brate_native_hisp_nonmex, data=data_regression)
+summary(full_model)
+```
+
+```{r, include=FALSE}
+# Reduced model
+model_reduced <- lm(brate_all ~ brate_2024+brate_3034+brate_whitenh+brate_hisp+brate_married, data=data_regression)
+summary(model_reduced)
+```
+
+```{r, include=FALSE}
+anova(model_reduced, full_model)
+```
+
+By applying ANOVA test, the result shows a non-significant result (p = 0.5399). Thus, we should reject full model and stick with reduced model
+
+## Conditions and Assumptions Check
+
+```{r linear, echo=FALSE,fig.align='center'}
+## condition 1:
+y_hat <- fitted(model_reduced)
+yi <- data_regression$brate_all
+plot(yi,y_hat)
+## condition 2:
+pairs( ~ brate_2024+brate_3034+brate_whitenh+brate_hisp+brate_married, data=data_regression)
+## residual vs. fitted
+res <- rstandard(model_reduced)
+y_hat <- fitted(model_reduced)
+plot(y_hat, res)
+## residual vs. predictors
+par(mfrow=c(2,3))
+
+plot(data_regression$brate_2024, res)
+
+plot(data_regression$brate_3034, res)
+
+plot(data_regression$brate_whitenh, res)
+
+plot(data_regression$brate_hisp, res)
+
+plot(data_regression$brate_married, res)
+
+## QQ plot
+qqnorm(res)
+qqline(res)
+```
+
+For a linear regression model to make sense, it should satisfy the below conditions:
+
+- Relationships between each pair of quantitative X and Y are straight enough.
+
+- The residuals across fitted values are about equal spread.
+
+- No extreme outliers exist. We want to avoid extreme outliers since the points in the model that do not fit the overall relationship and are far away from the mean value of X have leverage to change the line, leading to a biased result.
+
+We have to examine how well the above conditions are satisfied when we build our regression model. To check the first two conditions, we take a look at both the original scatterplot and the plot of the residuals against fitted or predicted values. From the plots,(Figure \@ref(fig: linear)) no sign of violation of normality or constant variance assumptions is observed, and the normal QQ plot suggests that the residuals follow a right-tailed
+distribution. The regression errors also have a normal distribution.
+
+| Adjusted R-squared | Degrees of Freedom | p-value |
+|--------------------|--------------------|---------|
+| 0.40247 | 2 | 0.5399 |
+
+Our final model interpreted is:
+Total Birth Rate = -1.40503 + (0.04456)*brate_2024 + (0.13034)*brate_3034 + (0.91645)*brate_whitenh + (0.14543)*brate_hisp + (-0.19442)*brate_married
+
+# Results
+
+In this paper, we replicated the paper published by the American Economic Association by plotting line charts to dig the contributing factors to the drop of birth rate and drawing a usmap to demonstrate the distribution of the change of birth rate before and after the Great Recession. We also applied a linear regression model to the processed data sets to find the predictors with systematic statistical methods and we successfully figured out a reduced linear regression model that explains the drop in birth rate. 
+Although we have applied what we learned to explore the reason behind the "US birth rate dropping" phenomenon, we can only find the factors that affect the result, however, we do not have enough evidence to explain the reason behind those contributing factors. The reason behind the simple social phenomenon may be complicated: it may be due to the economics, social norms, the distribution of resources, or maybe the mindset of having a kid has changed, young people tend to pursue a lifestyle with more freedom, thus they prefer a life without having kids. 
+With whatever reason for the birth rate drop, we have to face the result of the birth rate declining -- not only for the US, which leads to an aging population and shrinking workforce, posing challenges for economic growth and sustainable development of the society. To address this issue, the government may establish a better welfare system to reduce the cost and pressure of having a child, specifically free education, free health care and enough mental health support. The government should also cover more daily expenses of new born families and build more day care institutions to reduce the pressure of parents from work and life.
+
+# Discussion
+
+## Changes of US Birth rate before and after the Great Recession
+
+Figure \@ref(fig: fig3) is a map that illustrates the change in birth rates for each state in the United States between 2004-2008 and 2015-2019. We know that 2004-2008 is the time period prior to the Great Recession, while 2015-2019 is the period after the Great Recession. By looking at the change in birth rates for each state over the same five-year period, we can capture the impact on each state's birth rate as a result of the different economic and political policies adopted by each local government during and after the Great Recession.
+As we all know, each state has a different economic priority, with some states having a predominantly agricultural economy and others having a more business-oriented economy, so the Great Recession had varying effects on them. After a recession, governments often introduce different policies in order to recover the economy more rapidly. What we see here is actually the effect of the negative effects of the Great Depression offset by the positive effects of the recovering policies.
+Here we do not discuss the birth rate for the entire country, but instead break it down to each state, in such a way that avoids the potential bias when considering different situations everywhere with the averages. Such an approach provides a more accurate reflection of each state's unique situation.
+The entire map is divided into many regions on a statewide basis, and the colors of the regions represent the change in birth rates in those states. The darker the color of the filled area is, the more severe we find the reduction in birth rate in that area, and the lighter the color of the filled area is, it indicates that the Great Recession has a less significant impact on the birth rate in that state. In general, almost every state experienced a decrease in birth rates after the Great Recession. Thus we can get the conclusion that the Great Recession has a negative impact on the birth rate. However, at the same time, we also find that birth rates in North Dakota actually increased after the Great Recession. We think it is possible that this is the migration Response to the Fracking Boom[@wilson2020moving]. Exploiting positive labor market shocks from localized "fracking" Exploiting positive labor market shocks from localized "fracking" booms, the birth rate in North Dakota is supposed to increase.
+Meanwhile, we observe that the two states, Utah and Arizona, had the most serious impact on birth rates from the Great Recession.
+
+```{r fig3, fig.cap="Change of Birth Rates by State from 2004–2008 to 2015–2019", echo=FALSE}
+library(haven)
+data_fig3 <- read_dta("nchs/nchs_births_pop_1990_2019.dta")
+
+#Birth Data: NCHS Microdata
+temp0 <- data_fig3 %>% 
+  filter((data_fig3$year >= 2004 & data_fig3$year <= 2008) | (data_fig3$year >= 2015 & data_fig3$year <= 2019)) %>%
+  group_by(year, stname) %>%
+  select(year, stname, numbirth1544)
+  
+#Pop Data: CDC SEER
+age_race_comp_seer <- read_dta("pop/age_race_comp_seer.dta")
+age_race_comp_seer <- age_race_comp_seer %>%
+  mutate(pop1544 = pop1519 + pop2034 + pop3544) %>%
+  filter( year >= 2004 & year <= 2008 | year >= 2015 & year <= 2019) %>%
+    group_by(stname) %>%
+  select(year, stname, pop1544)
+
+#left join
+temp0 <- left_join(temp0,age_race_comp_seer,by=c("year" = "year", "stname" = "stname"))
+  
+#generate new column
+data_fig3 <- temp0 %>% mutate(year = case_when(year >= 2004 & year <= 2008 ~ "2004",
+                                       year >= 2015 & year <= 2019 ~ "2019")) %>%
+  group_by(stname,year) 
+
+aggregated_data <- 
+  aggregate(cbind(numbirth1544, pop1544)~ year + stname, data = data_fig3, FUN = mean) %>%
+  mutate(brate1544_thsnds = numbirth1544/pop1544 * 1000)
+
+library(dplyr)
+#table1
+table0 <- aggregated_data
+table1 = table0 %>% filter(table0$year == "2004") %>% 
+  rename(brate2004 = brate1544_thsnds) %>%
+  select(stname, brate2004)
+
+#table2
+table2 <- aggregated_data
+table3 = table2 %>% filter(table2$year == "2019") %>%
+  rename(brate2019 = brate1544_thsnds) %>%
+  select(stname, brate2019)
+
+#new table
+table = merge(x = table1, y = table3, by = c("stname", "stname"))
+table <- table %>% 
+  mutate(brate_diff = brate2019 - brate2004) %>%
+
+  rename(state = stname)
+
+#map
+library(usmap)
+library(ggplot2)
+plot_usmap(data = table, values = "brate_diff") +
+
+  scale_fill_continuous(high = "#FFFFE0", low = "#8B0000", name = "Population (2015)", label = scales::comma) +
+   theme(legend.position = "right")
+```
+
+
+## The Overall Change in the US Birth Rate
+
+The overall change could be written as the combination of the contribution of changing within-group birth rates, the contribution of changes in group population shares, and the interaction of a group’s changing rates and changing population shares.
+
+$$
+\Delta\left(\frac{B}{P}\right)_{t_{0}, t_{1}}=\sum_{i} s_{i, t_{o}} \Delta\left(\frac{B}{P}\right)_{i, t_{o} t_{1}}+\sum_{i}\left(\frac{B}{P}\right)_{i, t_{o}} \Delta s_{i, t_{o} t_{1}}+\sum_{i} \Delta s_{i, t_{o}, t_{1}} \Delta\left(\frac{B}{P}\right)_{i, t_{o}, t_{1}}
+$$ 
+
+
+where:
+-$B$ represents the amount of births
+
+-$P$ represents the population
+
+-$s$ represents the overall population
+
+-$i$ represents the index among the 63 groups
+
+-$t_0$ represents the beginning year
+
+-$t_1$ represents the ending year
+
+To transform this to a table:
+
+|variable name | meaning|
+|--------------|--------|
+| $B$ | the amount of births |
+| $P$ | the population |
+| $s$ | the overall population |
+| $i$ | the index among the 63 groups|
+| $t_0$ | the beginning year |
+| $t_1$ | the ending year |
+
+\newpage
+
+## Limitations
+
+### Stepwise Regression
+
+As a combination of the forward and backward selection techniques, stepwise regression is widely used in different areas of regression analysis. Stepwise regression requires two significance levels, one is for adding and another one is for removing variables from models. However, a fundamental problem with stepwise regression is that some truly explanatory variables that have a causal effect on dependent variables may happen to be statistically insignificant, while annoying variables may happen to be significant. Therefore, the model fits the data well in sample, but poorly out of sample[@wdd2]. In practice, the stepwise regression process may sometimes select explanatory variables that, although they do not directly affect the dependent variable, are systematically related to variables that do. In our study, for example, fertility depends on marriage rates, which in turn correlates with income. Even if income does not directly fertility, it is a proxy for income and may find its way into the stepwise regression equation. In reality, stepwise regression fails to solve the problem of Big Data with too many explanatory variables, making it less effective compared with other model selection techniques.
+
+### Limitation of Data
+
+It is worth noticing that the data used in this publication are estimates based on data collected are subject to error. There are two types of errors: sampling errors and non-sampling errors. Sampling error occurs due to the sample selected that fails to  represent the population, and a non-sampling error refers to an error that results during data collection process, which causes the data to differ from the true values[@wdd3]. In the study above, we describe some survey evidence related to our hypothesis that shifting priorities across cohorts may be a key explanation for the declining birth rate in the United States. We need to be aware of the limitations of self-reported survey responses. Self-reports on priorities, attitudes, reasons, etc., are often subject to interpretation, sensitive to survey wording or current context, plagued by recall issues, and 31 other limitations. In addition, the paper uses a limited amount of survey evidence, especially those that have been repeatedly asked to track trends for a long time.
+
+### Population Base for Hispanic Women and the effect
+
+In our linear regression model, the fertility rate of Hispanic women is an important variable. However, when considering the effect of a particular race's fertility rate on a country's overall fertility rate, we should also consider the racial percentage of the country's total population. Latinos accounted for 18% of the US population, or almost 59 million people as of 2017. Thus, in proportion to the population, the extent to which Hispanic women have contributed to the precipitous decline in the birth rate in the United States is not obvious. However, it is not yet certain that the declining birth rate among Hispanic women and its potential impact will lead to a sharp decline in the birth rate in the United States.
+
+
+\newpage
+
+
+# References
+
+
